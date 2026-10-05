@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dashboard-gen-lite · 静态仪表盘</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --txt:#e2e8f0; --mut:#94a3b8; --acc:#38bdf8; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, "PingFang SC", sans-serif;
+         background:var(--bg); color:var(--txt); padding:24px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  p.sub { color:var(--mut); margin:0 0 20px; font-size:13px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; }
+  .card { background:var(--card); border-radius:12px; padding:16px; }
+  .card .label { color:var(--mut); font-size:12px; }
+  .card .value { font-size:28px; font-weight:700; margin-top:6px; }
+  .card .delta { font-size:12px; margin-top:4px; }
+  .up { color:#4ade80; } .down { color:#f87171; }
+  .chart { background:var(--card); border-radius:12px; padding:16px; margin-top:20px; }
+  .bar-row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12px; }
+  .bar-row .name { width:90px; color:var(--mut); }
+  .bar-track { flex:1; background:#0b1220; border-radius:4px; height:18px; position:relative; }
+  .bar-fill { height:100%; background:var(--acc); border-radius:4px; }
+  .bar-row .num { width:60px; text-align:right; }
+</style>
+</head>
+<body>
+  <h1 id="title">数据仪表盘</h1>
+  <p class="sub" id="subtitle">由 dashboard-gen-lite 离线生成 · 无外部依赖</p>
+  <div class="cards" id="cards"></div>
+  <div class="chart">
+    <h3 style="margin-top:0">渠道访问量（柱状图）</h3>
+    <div id="bars"></div>
+  </div>
+
+<script id="dashboard-data" type="application/json">
+{
+  "title": "产品运营周报",
+  "metrics": [
+    {"label": "日活 DAU", "value": 12400, "delta": 8.2, "up": true},
+    {"label": "新增用户", "value": 860, "delta": 3.1, "up": true},
+    {"label": "转化率", "value": "4.8%", "delta": -0.5, "up": false},
+    {"label": "留存率", "value": "32%", "delta": 1.2, "up": true}
+  ],
+  "channels": [
+    {"name": "自然搜索", "value": 5200},
+    {"name": "直接访问", "value": 3100},
+    {"name": "社交媒体", "value": 1800},
+    {"name": "广告投放", "value": 2300}
+  ]
+}
+</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('dashboard-data').textContent);
+  document.getElementById('title').textContent = data.title;
+
+  // 指标卡
+  var cardsEl = document.getElementById('cards');
+  data.metrics.forEach(function (m) {
+    var card = document.createElement('div');
+    card.className = 'card';
+    var d = (m.up ? '▲' : '▼') + ' ' + Math.abs(m.delta) + '%';
+    card.innerHTML =
+      '<div class="label">' + m.label + '</div>' +
+      '<div class="value">' + m.value + '</div>' +
+      '<div class="delta ' + (m.up ? 'up' : 'down') + '">' + d + '</div>';
+    cardsEl.appendChild(card);
+  });
+
+  // 柱状图（纯 DOM）
+  var max = Math.max.apply(null, data.channels.map(function (c) { return c.value; }));
+  var barsEl = document.getElementById('bars');
+  data.channels.forEach(function (c) {
+    var row = document.createElement('div');
+    row.className = 'bar-row';
+    var pct = (c.value / max * 100).toFixed(1);
+    row.innerHTML =
+      '<div class="name">' + c.name + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="num">' + c.value + '</div>';
+    barsEl.appendChild(row);
+  });
+})();
+</script>
+</body>
+</html>
